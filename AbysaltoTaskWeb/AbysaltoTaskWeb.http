@@ -1,6 +1,6 @@
 @AbysaltoTaskWeb_HostAddress = http://localhost:5215
 
-GET {{AbysaltoTaskWeb_HostAddress}}/weatherforecast/
+GET {{AbysaltoTaskWeb_HostAddress}}
 Accept: application/json
 
 ###

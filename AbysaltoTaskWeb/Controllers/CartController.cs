@@ -4,16 +4,16 @@ namespace AbysaltoTaskWeb.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    public class CartController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
-        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly ILogger<CartController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public CartController(ILogger<CartController> logger)
         {
             _logger = logger;
         }
