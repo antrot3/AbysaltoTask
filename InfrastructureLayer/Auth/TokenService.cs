@@ -14,23 +14,23 @@ namespace InfrastructureLayer.Auth
 {
     public class TokenService : ITokenService
     {
-        private readonly IConfiguration _cfg;
-        public TokenService(IConfiguration cfg) => _cfg = cfg;
+        private readonly IConfiguration _configuration;
+        public TokenService(IConfiguration configuration) => _configuration = configuration;
 
         public string CreateToken(User user)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_cfg["Jwt:Secret"]!));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-            new Claim("id", user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email)
-        };
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
 
             var token = new JwtSecurityToken(
-                issuer: _cfg["Jwt:Issuer"],
-                audience: _cfg["Jwt:Audience"],
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.AddHours(8),
                 signingCredentials: creds);

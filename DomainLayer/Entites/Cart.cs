@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace AplicationLayer.Entities
 {
-    internal class Cart
+
+    public class Cart
     {
+        [Key]
+        public int Id { get; set; }
+
+        public int UserId { get; set; }
+
+        // Store articles as JSON
+        public string ArticlesJson { get; set; } = string.Empty;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

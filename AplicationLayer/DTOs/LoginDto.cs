@@ -6,5 +6,6 @@ using System.Threading.Tasks;
 
 namespace AplicationLayer.DTOs
 {
+    //Imutable class
     public record LoginDto(string Email, string Password);
 }

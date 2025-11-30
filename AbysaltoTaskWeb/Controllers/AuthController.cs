@@ -11,11 +11,14 @@ namespace AbysaltoTaskWeb.Controllers
     {
         private readonly IUserRepository _users;
         private readonly ITokenService _tokens;
+        private readonly ICartRepository _cartRepository;
 
-        public AuthController(IUserRepository users, ITokenService tokens)
+
+        public AuthController(IUserRepository users, ITokenService tokens, ICartRepository cartRepository)
         {
             _users = users;
             _tokens = tokens;
+            _cartRepository = cartRepository;
         }
 
         [HttpPost("register")]
@@ -48,6 +51,8 @@ namespace AbysaltoTaskWeb.Controllers
 
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Invalid password");
+
+            await _cartRepository.EnsureCartForUserAsync(user.Id);
 
             return Ok(new { token = _tokens.CreateToken(user) });
         }

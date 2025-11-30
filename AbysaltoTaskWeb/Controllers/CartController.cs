@@ -1,35 +1,45 @@
+using AplicationLayer.DTOs;
+using AplicationLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
-namespace AbysaltoTaskWeb.Controllers
+[ApiController]
+[Authorize]
+[Route("api/cart")]
+public class CartController : ControllerBase
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class CartController : ControllerBase
+    private readonly ICartRepository _cartRepository;
+    private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    public CartController(ICartRepository cartRepository)
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
+        _cartRepository = cartRepository;
+    }
 
-        private readonly ILogger<CartController> _logger;
+    [HttpGet]
+    public async Task<ActionResult<CartResponse>> GetMyCart()
+    {
+        var userId = GetUserId();
+        var cart = await _cartRepository.GetCartForUserAsync(userId);
+        if (cart == null) return NotFound();
 
-        public CartController(ILogger<CartController> logger)
-        {
-            _logger = logger;
-        }
+        return Ok(cart);
+    }
 
-        [HttpGet]
-        [Authorize]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
+    [HttpPost]
+    public async Task<ActionResult<CartResponse>> UpdateMyCart([FromBody] List<ArticleDto> articles)
+    {
+        var userId = GetUserId();
+        var cart = await _cartRepository.AddOrUpdateCartForUserAsync(userId, articles);
+        return Ok(cart);
+    }
+
+    [HttpDelete]
+    public async Task<IActionResult> ClearMyCart()
+    {
+        var userId = GetUserId();
+        var ok = await _cartRepository.ClearCartAsync(userId);
+        return ok ? NoContent() : NotFound();
     }
 }
