@@ -13,5 +13,6 @@ namespace AplicationLayer.Interfaces
     {
         Task<List<Order>> GetAllOrdersForUser(int userId);
         Task<OrderDetailsDTO> CreateOrderFromCart(int userId, OrderDetailsDTO orderDetails);
+        Task<bool> ExecuteOrderByIdAsync(int orderId);
     }
 }

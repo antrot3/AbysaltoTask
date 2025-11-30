@@ -40,4 +40,13 @@ public class OrderController : ControllerBase
         return Ok(userOrders);
     }
 
+    [HttpPost]
+    [Route("ExecuteOrder/{orderId}")]
+    public async Task<IActionResult> ExecuteOrder(int orderId)
+    {
+        var success = await _orderRepository.ExecuteOrderByIdAsync(orderId);
+        if (!success) return NotFound("Order not found or already executed");
+        return Ok("Order marked as delivered");
+    }
+
 }

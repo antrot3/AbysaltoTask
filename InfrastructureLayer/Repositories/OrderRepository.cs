@@ -37,11 +37,23 @@ namespace InfrastructureLayer.Repositories
             {
                 throw new ValidationException("Cart needs to have some items before creating order");
             }
+
+            if (orderDetails == null)
+                throw new ValidationException("Order details must be provided.");
+            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryAdress))
+                throw new ValidationException("Delivery address is required.");
+            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryCountry))
+                throw new ValidationException("Delivery country is required.");
+            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryName))
+                throw new ValidationException("Delivery name is required.");
+            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryCardNumber))
+                throw new ValidationException("Delivery card number is required.");
+
             Order order = new Order()
             {
                 UserId = userId,
                 CartId = cart.Id,
-                DeliveryAdress =orderDetails.DeliveryAdress,
+                DeliveryAdress = orderDetails.DeliveryAdress,
                 DeliveryCardNumber = orderDetails.DeliveryCardNumber,
                 DeliveryCountry = orderDetails.DeliveryCountry,
                 DeliveryName = orderDetails.DeliveryName
@@ -50,6 +62,23 @@ namespace InfrastructureLayer.Repositories
             _databaseContext.Orders.Add(order);
             await _databaseContext.SaveChangesAsync();
             return orderDetails;
+        }
+        public async Task<bool> ExecuteOrderByIdAsync(int orderId)
+        {
+            var order = await _databaseContext.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+                return false; 
+
+            if (order.IsDelivered)
+                return false;
+
+            order.IsDelivered = true;
+
+            _databaseContext.Orders.Update(order);
+            await _databaseContext.SaveChangesAsync();
+
+            return true;
         }
     }
 }
