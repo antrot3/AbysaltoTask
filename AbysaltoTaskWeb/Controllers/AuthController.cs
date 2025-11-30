@@ -13,7 +13,6 @@ namespace AbysaltoTaskWeb.Controllers
         private readonly ITokenService _tokens;
         private readonly ICartRepository _cartRepository;
 
-
         public AuthController(IUserRepository users, ITokenService tokens, ICartRepository cartRepository)
         {
             _users = users;

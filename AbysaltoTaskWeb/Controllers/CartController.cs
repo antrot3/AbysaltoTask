@@ -18,16 +18,20 @@ public class CartController : ControllerBase
     }
 
     [HttpGet]
+    [Route("GetMyCart")]
     public async Task<ActionResult<CartResponse>> GetMyCart()
     {
         var userId = GetUserId();
         var cart = await _cartRepository.GetCartForUserAsync(userId);
-        if (cart == null) return NotFound();
+        if (cart == null)
+            return NotFound();
 
         return Ok(cart);
     }
 
+
     [HttpPost]
+    [Route("UpdateMyCart")]
     public async Task<ActionResult<CartResponse>> UpdateMyCart([FromBody] List<ArticleDto> articles)
     {
         var userId = GetUserId();
@@ -35,7 +39,18 @@ public class CartController : ControllerBase
         return Ok(cart);
     }
 
+    [HttpPost]
+    [Route("DeleteFromCart")]
+
+    public async Task<ActionResult<CartResponse>> DeleteFromCart([FromBody] int articleId)
+    {
+        var userId = GetUserId();
+        var cart = await _cartRepository.RemoveArticleAsync(userId, articleId);
+        return Ok(cart);
+    }
+
     [HttpDelete]
+    [Route("ClearMyCart")]
     public async Task<IActionResult> ClearMyCart()
     {
         var userId = GetUserId();

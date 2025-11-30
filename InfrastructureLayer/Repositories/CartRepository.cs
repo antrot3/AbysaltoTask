@@ -4,19 +4,20 @@ using InfrastructureLayer.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using AplicationLayer.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 public class CartRepository : ICartRepository
 {
-    private readonly AppDbContext _db;
+    private readonly AppDbContext _databaseContext;
 
-    public CartRepository(AppDbContext db)
+    public CartRepository(AppDbContext database)
     {
-        _db = db;
+        _databaseContext = database;
     }
 
     public async Task<CartResponse?> GetCartForUserAsync(int userId)
     {
-        var cart = await _db.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
         if (cart == null) return null;
 
         var articles = JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)
@@ -31,7 +32,7 @@ public class CartRepository : ICartRepository
 
     public async Task EnsureCartForUserAsync(int userId)
     {
-        var cart = await _db.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
 
         if (cart == null)
         {
@@ -41,42 +42,96 @@ public class CartRepository : ICartRepository
                 ArticlesJson = "[]"
             };
 
-            _db.Carts.Add(newCart);
-            await _db.SaveChangesAsync();
+            _databaseContext.Carts.Add(newCart);
+            await _databaseContext.SaveChangesAsync();
         }
     }
 
     public async Task<CartResponse> AddOrUpdateCartForUserAsync(int userId, List<ArticleDto> articles)
     {
-        var cart = await _db.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
 
+        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+        foreach (var item in articles)
+        {
+            if (item.Id < 1)
+                throw new ValidationException("Article Id must be ≥ 1");
+
+            if (item.Quantity < 1)
+                throw new ValidationException("Article quantity must be ≥ 1");
+
+            if (item.Price < 1)
+                throw new ValidationException("Article price must be ≥ 1");
+        }
         if (cart == null)
         {
             cart = new Cart
             {
                 UserId = userId
             };
-            _db.Carts.Add(cart);
+            _databaseContext.Carts.Add(cart);
+            cart.ArticlesJson = JsonSerializer.Serialize(articles);
         }
+        else
+        {
+            List<ArticleDto> listOfArtiicles = new List<ArticleDto>();
+            var currentArticles = string.IsNullOrWhiteSpace(cart.ArticlesJson) ? new List<ArticleDto>() : JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)!;
+            var articlesToAdd = articles;
 
-        cart.ArticlesJson = JsonSerializer.Serialize(articles);
+            foreach (var item in currentArticles)
+            {
+                listOfArtiicles.Add(item);
+            }
+            foreach (var item in articlesToAdd)
+            {
+                var exists = listOfArtiicles.FirstOrDefault(x => x.Id == item.Id);
+                if (exists != null)
+                {
+                    exists.Quantity += item.Quantity;
+                }
+                else
+                {
+                    listOfArtiicles.Add(item);
+                }
+            }
+            cart.ArticlesJson = JsonSerializer.Serialize(listOfArtiicles);
+        }
+        await _databaseContext.SaveChangesAsync();
 
-        await _db.SaveChangesAsync();
-
+        var resultArticles = string.IsNullOrWhiteSpace(cart.ArticlesJson) ? new List<ArticleDto>() : JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)!;
         return new CartResponse
         {
             Id = cart.Id,
-            Articles = articles
+            Articles = resultArticles
         };
+    }
+    public async Task<bool> RemoveArticleAsync(int userId, int articleId)
+    {
+        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (cart == null)
+            return false;
+
+        var items = JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)!;
+        var item = items.FirstOrDefault(x => x.Id == articleId);
+
+        if (item == null)
+            return false;
+
+        items.Remove(item);
+
+        cart.ArticlesJson = JsonSerializer.Serialize(items);
+
+        await _databaseContext.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> ClearCartAsync(int userId)
     {
-        var cart = await _db.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
         if (cart == null) return false;
 
         cart.ArticlesJson = "[]";
-        await _db.SaveChangesAsync();
+        await _databaseContext.SaveChangesAsync();
         return true;
     }
 }

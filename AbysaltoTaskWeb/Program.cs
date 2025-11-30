@@ -1,3 +1,4 @@
+using AbysaltoTaskWeb.Middlewares;
 using AplicationLayer.Interfaces;
 using InfrastructureLayer.Auth;
 using InfrastructureLayer.Persistence;
@@ -48,6 +49,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 // Repositories
+builder.Services.AddTransient<ExceptionMiddleware>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -91,7 +93,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseMiddleware<ExceptionMiddleware>();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
