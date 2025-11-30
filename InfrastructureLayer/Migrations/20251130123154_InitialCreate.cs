@@ -49,28 +49,29 @@ namespace InfrastructureLayer.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    DeliveryCartId = table.Column<int>(type: "int", nullable: false),
+                    CartId = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DeliveryAdress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DeliveryCountry = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DeliveryName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DeliveryCardNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    DeliveryCardNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsDelivered = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Orders", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Orders_Carts_DeliveryCartId",
-                        column: x => x.DeliveryCartId,
+                        name: "FK_Orders_Carts_CartId",
+                        column: x => x.CartId,
                         principalTable: "Carts",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Orders_DeliveryCartId",
+                name: "IX_Orders_CartId",
                 table: "Orders",
-                column: "DeliveryCartId");
+                column: "CartId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",

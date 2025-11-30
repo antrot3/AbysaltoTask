@@ -9,16 +9,16 @@ namespace AplicationLayer.Entities
         public int Id { get; set; }
 
         public int UserId { get; set; }
+        public int CartId { get; set; }
 
-        public Cart DeliveryCart { get; set; }
+        public Cart DeliveryCart { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public string DeliveryAdress { get; set; }
-        public string DeliveryCountry { get; set; }
-        public string DeliveryName{ get; set; }
-        public string DeliveryCardNumber { get; set; }
-
-        public bool IsDelivered;
+        public string DeliveryAdress { get; set; } = string.Empty;
+        public string DeliveryCountry { get; set; } = string.Empty;
+        public string DeliveryName { get; set; } = string.Empty;
+        public string DeliveryCardNumber { get; set; } = string.Empty;
+        public bool IsDelivered { get; set; }
     }
 }

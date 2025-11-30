@@ -1,7 +1,12 @@
-﻿using AplicationLayer.Interfaces;
+﻿using AplicationLayer.DTOs;
+using AplicationLayer.Entities;
+using AplicationLayer.Interfaces;
+using DomainLayer.Entites;
 using InfrastructureLayer.Persistence;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,24 +22,34 @@ namespace InfrastructureLayer.Repositories
             _databaseContext = database;
         }
 
-        public Task<bool> AddCreditCardDetails()
+        public async Task<List<Order>> GetAllOrdersForUser(int userId)
         {
-            throw new NotImplementedException();
+            return await _databaseContext.Orders
+                .Include(o => o.DeliveryCart)
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
         }
 
-        public Task<bool> AddOrEditAdress()
+        public async Task<OrderDetailsDTO> CreateOrderFromCart(int userId, OrderDetailsDTO orderDetails)
         {
-            throw new NotImplementedException();
-        }
+            var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (cart == null)
+            {
+                throw new ValidationException("Cart needs to have some items before creating order");
+            }
+            Order order = new Order()
+            {
+                UserId = userId,
+                CartId = cart.Id,
+                DeliveryAdress =orderDetails.DeliveryAdress,
+                DeliveryCardNumber = orderDetails.DeliveryCardNumber,
+                DeliveryCountry = orderDetails.DeliveryCountry,
+                DeliveryName = orderDetails.DeliveryName
+            };
 
-        public Task<bool> CreateDeliveryFromCart()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> GetAllOrdersForUser(int userID)
-        {
-            throw new NotImplementedException();
+            _databaseContext.Orders.Add(order);
+            await _databaseContext.SaveChangesAsync();
+            return orderDetails;
         }
     }
 }

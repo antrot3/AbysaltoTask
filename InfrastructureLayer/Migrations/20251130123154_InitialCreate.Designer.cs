@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InfrastructureLayer.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251130115800_InitialCreate")]
+    [Migration("20251130123154_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -56,6 +56,9 @@ namespace InfrastructureLayer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -67,9 +70,6 @@ namespace InfrastructureLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("DeliveryCartId")
-                        .HasColumnType("int");
-
                     b.Property<string>("DeliveryCountry")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -78,12 +78,15 @@ namespace InfrastructureLayer.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsDelivered")
+                        .HasColumnType("bit");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DeliveryCartId");
+                    b.HasIndex("CartId");
 
                     b.ToTable("Orders");
                 });
@@ -122,7 +125,7 @@ namespace InfrastructureLayer.Migrations
                 {
                     b.HasOne("AplicationLayer.Entities.Cart", "DeliveryCart")
                         .WithMany()
-                        .HasForeignKey("DeliveryCartId")
+                        .HasForeignKey("CartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

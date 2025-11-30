@@ -1,5 +1,7 @@
 using AplicationLayer.DTOs;
+using AplicationLayer.Entities;
 using AplicationLayer.Interfaces;
+using DomainLayer.Entites;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -20,10 +22,9 @@ public class OrderController : ControllerBase
         _orderRepository = orderRepository;
     }
 
-
     [HttpGet]
     [Route("GetMyOrders")]
-    public async Task<ActionResult<CartResponse>> GetMyOrders()
+    public async Task<ActionResult<List<Order>>> GetMyOrders()
     {
         var userId = GetUserId();
         var userOrders = await _orderRepository.GetAllOrdersForUser(userId);
@@ -32,9 +33,11 @@ public class OrderController : ControllerBase
 
     [HttpPost]
     [Route("UpdateMyOrderDetails")]
-    public async Task<ActionResult<CartResponse>> UpdateMyOrderDetails([FromBody] List<ArticleDto> articles)
+    public async Task<ActionResult<OrderDetailsDTO>> CreateOrderFromCart([FromBody] OrderDetailsDTO userDetails)
     {
-        return Ok();
+        var userId = GetUserId();
+        var userOrders = await _orderRepository.CreateOrderFromCart(userId, userDetails);
+        return Ok(userOrders);
     }
 
 }
