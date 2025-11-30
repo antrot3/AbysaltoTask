@@ -2,6 +2,7 @@
 using AplicationLayer.Interfaces;
 using DomainLayer.Entites;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace AbysaltoTaskWeb.Controllers
 {
@@ -23,12 +24,14 @@ namespace AbysaltoTaskWeb.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
         {
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
+
             var exists = await _users.GetByEmailAsync(dto.Email);
-            if (exists != null)
+            if (exists != null) 
                 return BadRequest("Email already in use");
 
             var hash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-
             var user = new User
             {
                 Email = dto.Email,
@@ -37,6 +40,7 @@ namespace AbysaltoTaskWeb.Controllers
             };
 
             await _users.CreateAsync(user);
+            await _cartRepository.EnsureCartForUserAsync(user.Id);
 
             return Ok(new { token = _tokens.CreateToken(user) });
         }
@@ -45,14 +49,13 @@ namespace AbysaltoTaskWeb.Controllers
         public async Task<IActionResult> Login(LoginDto dto)
         {
             var user = await _users.GetByEmailAsync(dto.Email);
-
-            if (user == null) return Unauthorized("Invalid email");
+            if (user == null) 
+                return Unauthorized("Invalid email or password");
 
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Invalid password");
+                return Unauthorized("Invalid email or password");
 
             await _cartRepository.EnsureCartForUserAsync(user.Id);
-
             return Ok(new { token = _tokens.CreateToken(user) });
         }
     }

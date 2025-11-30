@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AplicationLayer.Entities
 {
@@ -9,16 +10,17 @@ namespace AplicationLayer.Entities
         public int Id { get; set; }
 
         public int UserId { get; set; }
-        public int CartId { get; set; }
 
-        public Cart DeliveryCart { get; set; } = null!;
+        public int CartId { get; set; }
+        [ForeignKey(nameof(CartId))]
+        public virtual Cart DeliveryCart { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public string DeliveryAdress { get; set; } = string.Empty;
-        public string DeliveryCountry { get; set; } = string.Empty;
-        public string DeliveryName { get; set; } = string.Empty;
-        public string DeliveryCardNumber { get; set; } = string.Empty;
+        [Required] public string DeliveryAddress { get; set; } = null!;
+        [Required] public string DeliveryCountry { get; set; } = null!;
+        [Required] public string DeliveryName { get; set; } = null!;
+        [Required] public string DeliveryCardNumberEncrypted { get; set; } = null!;
         public bool IsDelivered { get; set; }
     }
 }

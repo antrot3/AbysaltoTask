@@ -1,7 +1,6 @@
 using AplicationLayer.DTOs;
 using AplicationLayer.Entities;
 using AplicationLayer.Interfaces;
-using DomainLayer.Entites;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,42 +10,34 @@ using System.Security.Claims;
 [Route("api/order")]
 public class OrderController : ControllerBase
 {
-    private readonly ICartRepository _cartRepository;
     private readonly IOrderRepository _orderRepository;
-
     private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     public OrderController(ICartRepository cartRepository, IOrderRepository orderRepository)
     {
-        _cartRepository = cartRepository;
         _orderRepository = orderRepository;
     }
 
-    [HttpGet]
-    [Route("GetMyOrders")]
+    [HttpGet("myorders")]
     public async Task<ActionResult<List<Order>>> GetMyOrders()
     {
-        var userId = GetUserId();
-        var userOrders = await _orderRepository.GetAllOrdersForUser(userId);
-        return Ok(userOrders);
+        var orders = await _orderRepository.GetAllOrdersForUser(GetUserId());
+        return Ok(orders);
     }
 
-    [HttpPost]
-    [Route("UpdateMyOrderDetails")]
-    public async Task<ActionResult<OrderDetailsDTO>> CreateOrderFromCart([FromBody] OrderDetailsDTO userDetails)
+    [HttpPost("create")]
+    public async Task<ActionResult<OrderDetailsDTO>> CreateOrder([FromBody] OrderDetailsDTO orderDetails)
     {
-        var userId = GetUserId();
-        var userOrders = await _orderRepository.CreateOrderFromCart(userId, userDetails);
-        return Ok(userOrders);
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var created = await _orderRepository.CreateOrderFromCart(GetUserId(), orderDetails);
+        return Ok(created);
     }
 
-    [HttpPost]
-    [Route("ExecuteOrder/{orderId}")]
+    [HttpPost("execute/{orderId}")]
     public async Task<IActionResult> ExecuteOrder(int orderId)
     {
         var success = await _orderRepository.ExecuteOrderByIdAsync(orderId);
-        if (!success) return NotFound("Order not found or already executed");
-        return Ok("Order marked as delivered");
+        return success ? Ok("Order marked as delivered") : NotFound("Order not found or already executed");
     }
-
 }

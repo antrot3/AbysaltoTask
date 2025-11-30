@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InfrastructureLayer.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251130123154_InitialCreate")]
+    [Migration("20251130193659_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -33,12 +33,14 @@ namespace InfrastructureLayer.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ArticlesJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -46,6 +48,39 @@ namespace InfrastructureLayer.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Carts");
+                });
+
+            modelBuilder.Entity("AplicationLayer.Entities.CartItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ArticleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartId");
+
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("AplicationLayer.Entities.Order", b =>
@@ -62,11 +97,11 @@ namespace InfrastructureLayer.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DeliveryAdress")
+                    b.Property<string>("DeliveryAddress")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("DeliveryCardNumber")
+                    b.Property<string>("DeliveryCardNumberEncrypted")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -121,6 +156,17 @@ namespace InfrastructureLayer.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("AplicationLayer.Entities.CartItem", b =>
+                {
+                    b.HasOne("AplicationLayer.Entities.Cart", "Cart")
+                        .WithMany("Items")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+                });
+
             modelBuilder.Entity("AplicationLayer.Entities.Order", b =>
                 {
                     b.HasOne("AplicationLayer.Entities.Cart", "DeliveryCart")
@@ -130,6 +176,11 @@ namespace InfrastructureLayer.Migrations
                         .IsRequired();
 
                     b.Navigation("DeliveryCart");
+                });
+
+            modelBuilder.Entity("AplicationLayer.Entities.Cart", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

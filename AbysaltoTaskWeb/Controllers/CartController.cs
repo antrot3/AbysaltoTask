@@ -3,6 +3,7 @@ using AplicationLayer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 [ApiController]
 [Authorize]
@@ -17,43 +18,31 @@ public class CartController : ControllerBase
         _cartRepository = cartRepository;
     }
 
-    [HttpGet]
-    [Route("GetMyCart")]
+    [HttpGet("mycart")]
     public async Task<ActionResult<CartResponse>> GetMyCart()
     {
-        var userId = GetUserId();
-        var cart = await _cartRepository.GetCartForUserAsync(userId);
-        if (cart == null)
-            return NotFound();
-
-        return Ok(cart);
+        var cart = await _cartRepository.GetCartForUserAsync(GetUserId());
+        return cart == null ? NotFound() : Ok(cart);
     }
 
-    [HttpPost]
-    [Route("UpdateMyCart")]
+    [HttpPost("update")]
     public async Task<ActionResult<CartResponse>> UpdateMyCart([FromBody] List<ArticleDto> articles)
     {
-        var userId = GetUserId();
-        var cart = await _cartRepository.AddOrUpdateCartForUserAsync(userId, articles);
+        var cart = await _cartRepository.AddOrUpdateCartForUserAsync(GetUserId(), articles);
         return Ok(cart);
     }
 
-    [HttpPost]
-    [Route("DeleteFromCart")]
-
-    public async Task<ActionResult<CartResponse>> DeleteFromCart([FromBody] int articleId)
+    [HttpPost("remove")]
+    public async Task<ActionResult<CartResponse>> RemoveArticle([FromBody] int articleId)
     {
-        var userId = GetUserId();
-        var cart = await _cartRepository.RemoveArticleAsync(userId, articleId);
-        return Ok(cart);
+        var success = await _cartRepository.RemoveArticleAsync(GetUserId(), articleId);
+        return success ? Ok(await _cartRepository.GetCartForUserAsync(GetUserId())) : NotFound();
     }
 
-    [HttpDelete]
-    [Route("ClearMyCart")]
-    public async Task<IActionResult> ClearMyCart()
+    [HttpDelete("clear")]
+    public async Task<IActionResult> ClearCart()
     {
-        var userId = GetUserId();
-        var ok = await _cartRepository.ClearCartAsync(userId);
-        return ok ? NoContent() : NotFound();
+        var success = await _cartRepository.ClearCartAsync(GetUserId());
+        return success ? NoContent() : NotFound();
     }
 }

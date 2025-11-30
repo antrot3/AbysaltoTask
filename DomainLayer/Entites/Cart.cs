@@ -10,9 +10,11 @@ namespace AplicationLayer.Entities
 
         public int UserId { get; set; }
 
-        // Store articles as JSON
-        public string ArticlesJson { get; set; } = string.Empty;
+        public virtual List<CartItem> Items { get; set; } = new();
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Timestamp] // Concurrency token
+        public byte[] RowVersion { get; set; } = null!;
     }
 }

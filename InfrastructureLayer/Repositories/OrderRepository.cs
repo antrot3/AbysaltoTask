@@ -15,69 +15,56 @@ namespace InfrastructureLayer.Repositories
 {
     public class OrderRepository : IOrderRepository
     {
-        private readonly AppDbContext _databaseContext;
+        private readonly AppDbContext _db;
+        private readonly IEncryptionService _encryptionService;
 
-        public OrderRepository(AppDbContext database)
+        public OrderRepository(AppDbContext db, IEncryptionService encryptionService)
         {
-            _databaseContext = database;
+            _db = db;
+            _encryptionService = encryptionService;
         }
 
         public async Task<List<Order>> GetAllOrdersForUser(int userId)
         {
-            return await _databaseContext.Orders
-                .Include(o => o.DeliveryCart)
-                .Where(x => x.UserId == userId)
-                .ToListAsync();
+            return await _db.Orders.Include(o => o.DeliveryCart)
+                                   .ThenInclude(c => c.Items)
+                                   .Where(o => o.UserId == userId)
+                                   .ToListAsync();
         }
 
-        public async Task<OrderDetailsDTO> CreateOrderFromCart(int userId, OrderDetailsDTO orderDetails)
+        public async Task<OrderDetailsDTO> CreateOrderFromCart(int userId, OrderDetailsDTO details)
         {
-            var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
-            if (cart == null)
-            {
-                throw new ValidationException("Cart needs to have some items before creating order");
-            }
+            if (details == null) 
+                throw new ValidationException("Order details are required.");
 
-            if (orderDetails == null)
-                throw new ValidationException("Order details must be provided.");
-            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryAdress))
-                throw new ValidationException("Delivery address is required.");
-            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryCountry))
-                throw new ValidationException("Delivery country is required.");
-            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryName))
-                throw new ValidationException("Delivery name is required.");
-            if (string.IsNullOrWhiteSpace(orderDetails.DeliveryCardNumber))
-                throw new ValidationException("Delivery card number is required.");
+            var cart = await _db.Carts.Include(c => c.Items).FirstOrDefaultAsync(c => c.UserId == userId);
+            if (cart == null || !cart.Items.Any())
+                throw new ValidationException("Cart must have at least one item.");
 
-            Order order = new Order()
+            var order = new Order
             {
                 UserId = userId,
                 CartId = cart.Id,
-                DeliveryAdress = orderDetails.DeliveryAdress,
-                DeliveryCardNumber = orderDetails.DeliveryCardNumber,
-                DeliveryCountry = orderDetails.DeliveryCountry,
-                DeliveryName = orderDetails.DeliveryName
+                DeliveryAddress = details.DeliveryAddress,
+                DeliveryCountry = details.DeliveryCountry,
+                DeliveryName = details.DeliveryName,
+                DeliveryCardNumberEncrypted = _encryptionService.Encrypt(details.DeliveryCardNumber)
             };
 
-            _databaseContext.Orders.Add(order);
-            await _databaseContext.SaveChangesAsync();
-            return orderDetails;
+            _db.Orders.Add(order);
+            await _db.SaveChangesAsync();
+
+            return details;
         }
+
         public async Task<bool> ExecuteOrderByIdAsync(int orderId)
         {
-            var order = await _databaseContext.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-
-            if (order == null)
-                return false; 
-
-            if (order.IsDelivered)
+            var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+            if (order == null || order.IsDelivered) 
                 return false;
 
             order.IsDelivered = true;
-
-            _databaseContext.Orders.Update(order);
-            await _databaseContext.SaveChangesAsync();
-
+            await _db.SaveChangesAsync();
             return true;
         }
     }

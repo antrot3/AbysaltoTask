@@ -18,8 +18,8 @@ namespace InfrastructureLayer.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<int>(type: "int", nullable: false),
-                    ArticlesJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,6 +43,29 @@ namespace InfrastructureLayer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CartItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CartId = table.Column<int>(type: "int", nullable: false),
+                    ArticleId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CartItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CartItems_Carts_CartId",
+                        column: x => x.CartId,
+                        principalTable: "Carts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Orders",
                 columns: table => new
                 {
@@ -51,10 +74,10 @@ namespace InfrastructureLayer.Migrations
                     UserId = table.Column<int>(type: "int", nullable: false),
                     CartId = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DeliveryAdress = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DeliveryAddress = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DeliveryCountry = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DeliveryName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DeliveryCardNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DeliveryCardNumberEncrypted = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsDelivered = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -67,6 +90,11 @@ namespace InfrastructureLayer.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartItems_CartId",
+                table: "CartItems",
+                column: "CartId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_CartId",
@@ -83,6 +111,9 @@ namespace InfrastructureLayer.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "CartItems");
+
             migrationBuilder.DropTable(
                 name: "Orders");
 

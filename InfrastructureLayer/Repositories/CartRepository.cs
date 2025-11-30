@@ -17,120 +17,89 @@ public class CartRepository : ICartRepository
 
     public async Task<CartResponse?> GetCartForUserAsync(int userId)
     {
-        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
-        if (cart == null) return null;
+        var cart = await _databaseContext.Carts.Include(c => c.Items).FirstOrDefaultAsync(c => c.UserId == userId);
 
-        var articles = JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)
-                       ?? new List<ArticleDto>();
+        if (cart == null) return null;
 
         return new CartResponse
         {
             Id = cart.Id,
-            Articles = articles
+            Articles = cart.Items.Select(i => new ArticleDto
+            {
+                Id = i.ArticleId,
+                Name = i.Name,
+                Price = i.Price,
+                Quantity = i.Quantity
+            }).ToList()
         };
     }
 
     public async Task EnsureCartForUserAsync(int userId)
     {
-        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
-
-        if (cart == null)
+        if (!await _databaseContext.Carts.AnyAsync(c => c.UserId == userId))
         {
-            var newCart = new Cart
-            {
-                UserId = userId,
-                ArticlesJson = "[]"
-            };
-
-            _databaseContext.Carts.Add(newCart);
+            _databaseContext.Carts.Add(new Cart { UserId = userId });
             await _databaseContext.SaveChangesAsync();
         }
     }
 
     public async Task<CartResponse> AddOrUpdateCartForUserAsync(int userId, List<ArticleDto> articles)
     {
+        if (articles == null || !articles.Any())
+            throw new ValidationException("No articles provided.");
 
-        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
-        foreach (var item in articles)
-        {
-            if (item.Id < 1)
-                throw new ValidationException("Article Id must be ≥ 1");
+        var cart = await _databaseContext.Carts.Include(c => c.Items)
+                                  .FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if (item.Quantity < 1)
-                throw new ValidationException("Article quantity must be ≥ 1");
-
-            if (item.Price < 1)
-                throw new ValidationException("Article price must be ≥ 1");
-        }
         if (cart == null)
         {
-            cart = new Cart
-            {
-                UserId = userId
-            };
+            cart = new Cart { UserId = userId };
             _databaseContext.Carts.Add(cart);
-            cart.ArticlesJson = JsonSerializer.Serialize(articles);
         }
-        else
-        {
-            List<ArticleDto> listOfArtiicles = new List<ArticleDto>();
-            var currentArticles = string.IsNullOrWhiteSpace(cart.ArticlesJson) ? new List<ArticleDto>() : JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)!;
-            var articlesToAdd = articles;
 
-            foreach (var item in currentArticles)
-            {
-                listOfArtiicles.Add(item);
-            }
-            foreach (var item in articlesToAdd)
-            {
-                var exists = listOfArtiicles.FirstOrDefault(x => x.Id == item.Id);
-                if (exists != null)
+        var itemsDict = cart.Items.ToDictionary(x => x.ArticleId);
+
+        foreach (var article in articles)
+        {
+            if (article.Id < 1 || article.Quantity < 1 || article.Price < 0)
+                throw new ValidationException("Invalid article data.");
+
+            if (itemsDict.TryGetValue(article.Id, out var existingItem))
+                existingItem.Quantity += article.Quantity;
+            else
+                cart.Items.Add(new CartItem
                 {
-                    exists.Quantity += item.Quantity;
-                }
-                else
-                {
-                    listOfArtiicles.Add(item);
-                }
-            }
-            cart.ArticlesJson = JsonSerializer.Serialize(listOfArtiicles);
+                    ArticleId = article.Id,
+                    Name = article.Name,
+                    Price = article.Price,
+                    Quantity = article.Quantity
+                });
         }
+
         await _databaseContext.SaveChangesAsync();
 
-        var resultArticles = string.IsNullOrWhiteSpace(cart.ArticlesJson) ? new List<ArticleDto>() : JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)!;
-        return new CartResponse
-        {
-            Id = cart.Id,
-            Articles = resultArticles
-        };
+        return await GetCartForUserAsync(userId) ?? new CartResponse();
     }
+
     public async Task<bool> RemoveArticleAsync(int userId, int articleId)
     {
-        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+        var cartItem = await _databaseContext.CartItems.Include(i => i.Cart).FirstOrDefaultAsync(i => i.Cart.UserId == userId && i.ArticleId == articleId);
 
-        if (cart == null)
+        if (cartItem == null) 
             return false;
 
-        var items = JsonSerializer.Deserialize<List<ArticleDto>>(cart.ArticlesJson)!;
-        var item = items.FirstOrDefault(x => x.Id == articleId);
-
-        if (item == null)
-            return false;
-
-        items.Remove(item);
-
-        cart.ArticlesJson = JsonSerializer.Serialize(items);
-
+        _databaseContext.CartItems.Remove(cartItem);
         await _databaseContext.SaveChangesAsync();
         return true;
     }
 
     public async Task<bool> ClearCartAsync(int userId)
     {
-        var cart = await _databaseContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
-        if (cart == null) return false;
+        var cart = await _databaseContext.Carts.Include(c => c.Items).FirstOrDefaultAsync(c => c.UserId == userId);
+        if (cart == null)
+            return false;
 
-        cart.ArticlesJson = "[]";
+        _databaseContext.CartItems.RemoveRange(cart.Items);
         await _databaseContext.SaveChangesAsync();
         return true;
     }

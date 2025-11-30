@@ -12,13 +12,16 @@ namespace InfrastructureLayer.Persistence
 
         public DbSet<User> Users => Set<User>();
         public DbSet<Cart> Carts => Set<Cart>();
+        public DbSet<CartItem> CartItems => Set<CartItem>();
         public DbSet<Order> Orders => Set<Order>();
-
 
         protected override void OnModelCreating(ModelBuilder mb)
         {
             mb.Entity<User>().HasIndex(u => u.Email).IsUnique();
+
+            mb.Entity<CartItem>() 
+              .Property(ci => ci.Price)
+              .HasPrecision(18, 4); 
         }
     }
-
 }

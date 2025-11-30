@@ -1,5 +1,6 @@
 using AbysaltoTaskWeb.Middlewares;
 using AplicationLayer.Interfaces;
+using AplicationLayer.Services;
 using InfrastructureLayer.Auth;
 using InfrastructureLayer.Persistence;
 using InfrastructureLayer.Repositories;
@@ -53,7 +54,8 @@ builder.Services.AddTransient<ExceptionMiddleware>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenService, TokenService>(); 
+builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 
 // JWT Authentifikacija
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!);
@@ -75,6 +77,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
 builder.Services.AddAuthorization();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+        options.JsonSerializerOptions.MaxDepth = 64; 
+    });
 var app = builder.Build();
 {
     app.UseSwagger();
