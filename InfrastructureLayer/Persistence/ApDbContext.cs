@@ -12,6 +12,8 @@ namespace InfrastructureLayer.Persistence
 
         public DbSet<User> Users => Set<User>();
         public DbSet<Cart> Carts => Set<Cart>();
+        public DbSet<Order> Orders => Set<Order>();
+
 
         protected override void OnModelCreating(ModelBuilder mb)
         {

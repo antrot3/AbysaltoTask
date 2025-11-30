@@ -45,6 +45,46 @@ namespace InfrastructureLayer.Migrations
                     b.ToTable("Carts");
                 });
 
+            modelBuilder.Entity("AplicationLayer.Entities.Order", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeliveryAdress")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeliveryCardNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DeliveryCartId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DeliveryCountry")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeliveryName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeliveryCartId");
+
+                    b.ToTable("Orders");
+                });
+
             modelBuilder.Entity("DomainLayer.Entites.User", b =>
                 {
                     b.Property<int>("Id")
@@ -73,6 +113,17 @@ namespace InfrastructureLayer.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("AplicationLayer.Entities.Order", b =>
+                {
+                    b.HasOne("AplicationLayer.Entities.Cart", "DeliveryCart")
+                        .WithMany()
+                        .HasForeignKey("DeliveryCartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DeliveryCart");
                 });
 #pragma warning restore 612, 618
         }

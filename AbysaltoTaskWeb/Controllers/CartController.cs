@@ -29,7 +29,6 @@ public class CartController : ControllerBase
         return Ok(cart);
     }
 
-
     [HttpPost]
     [Route("UpdateMyCart")]
     public async Task<ActionResult<CartResponse>> UpdateMyCart([FromBody] List<ArticleDto> articles)
