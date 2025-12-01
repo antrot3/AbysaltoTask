@@ -11,8 +11,7 @@ namespace AplicationLayer.Interfaces
 {
     public interface IOrderRepository
     {
-        Task<List<Order>> GetAllOrdersForUser(int userId);
+        Task<List<OrderDto>> GetAllOrdersForUser(int userId);
         Task<OrderDetailsDTO> CreateOrderFromCart(int userId, OrderDetailsDTO orderDetails);
-        Task<bool> ExecuteOrderByIdAsync(int orderId);
     }
 }

@@ -19,21 +19,21 @@ public class CartController : ControllerBase
     }
 
     [HttpGet("mycart")]
-    public async Task<ActionResult<CartResponse>> GetMyCart()
+    public async Task<ActionResult<CartDto>> GetMyCart()
     {
         var cart = await _cartRepository.GetCartForUserAsync(GetUserId());
         return cart == null ? NotFound() : Ok(cart);
     }
 
     [HttpPost("update")]
-    public async Task<ActionResult<CartResponse>> UpdateMyCart([FromBody] List<ArticleDto> articles)
+    public async Task<ActionResult<CartDto>> UpdateMyCart([FromBody] List<ArticleDto> articles)
     {
         var cart = await _cartRepository.AddOrUpdateCartForUserAsync(GetUserId(), articles);
         return Ok(cart);
     }
 
     [HttpPost("remove")]
-    public async Task<ActionResult<CartResponse>> RemoveArticle([FromBody] int articleId)
+    public async Task<ActionResult<CartDto>> RemoveArticle([FromBody] int articleId)
     {
         var success = await _cartRepository.RemoveArticleAsync(GetUserId(), articleId);
         return success ? Ok(await _cartRepository.GetCartForUserAsync(GetUserId())) : NotFound();

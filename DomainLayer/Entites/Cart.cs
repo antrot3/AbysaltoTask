@@ -14,7 +14,7 @@ namespace AplicationLayer.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [Timestamp] // Concurrency token
+        [Timestamp]
         public byte[] RowVersion { get; set; } = null!;
     }
 }

@@ -1,11 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace AplicationLayer.DTOs
 {
-    //Imutable class
-    public record RegisterDto(string Email, string Password, string? FullName);
+    public record RegisterDto(
+
+        [Required]
+        [EmailAddress]
+        string Email,
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters long")]
+        string Password,
+
+        string? FullName
+    );
 }

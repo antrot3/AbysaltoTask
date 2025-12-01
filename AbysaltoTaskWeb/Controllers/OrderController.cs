@@ -19,7 +19,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("myorders")]
-    public async Task<ActionResult<List<Order>>> GetMyOrders()
+    public async Task<ActionResult<List<OrderDto>>> GetMyOrders()
     {
         var orders = await _orderRepository.GetAllOrdersForUser(GetUserId());
         return Ok(orders);
@@ -34,10 +34,4 @@ public class OrderController : ControllerBase
         return Ok(created);
     }
 
-    [HttpPost("execute/{orderId}")]
-    public async Task<IActionResult> ExecuteOrder(int orderId)
-    {
-        var success = await _orderRepository.ExecuteOrderByIdAsync(orderId);
-        return success ? Ok("Order marked as delivered") : NotFound("Order not found or already executed");
-    }
 }

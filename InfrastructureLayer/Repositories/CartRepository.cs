@@ -15,18 +15,16 @@ public class CartRepository : ICartRepository
         _databaseContext = database;
     }
 
-    public async Task<CartResponse?> GetCartForUserAsync(int userId)
+    public async Task<CartDto?> GetCartForUserAsync(int userId)
     {
         var cart = await _databaseContext.Carts.Include(c => c.Items).FirstOrDefaultAsync(c => c.UserId == userId);
 
         if (cart == null) return null;
 
-        return new CartResponse
+        return new CartDto
         {
-            Id = cart.Id,
             Articles = cart.Items.Select(i => new ArticleDto
             {
-                Id = i.ArticleId,
                 Name = i.Name,
                 Price = i.Price,
                 Quantity = i.Quantity
@@ -43,13 +41,12 @@ public class CartRepository : ICartRepository
         }
     }
 
-    public async Task<CartResponse> AddOrUpdateCartForUserAsync(int userId, List<ArticleDto> articles)
+    public async Task<CartDto> AddOrUpdateCartForUserAsync(int userId, List<ArticleDto> articles)
     {
         if (articles == null || !articles.Any())
             throw new ValidationException("No articles provided.");
 
-        var cart = await _databaseContext.Carts.Include(c => c.Items)
-                                  .FirstOrDefaultAsync(c => c.UserId == userId);
+        var cart = await _databaseContext.Carts.Include(c => c.Items).FirstOrDefaultAsync(c => c.UserId == userId);
 
         if (cart == null)
         {
@@ -57,19 +54,18 @@ public class CartRepository : ICartRepository
             _databaseContext.Carts.Add(cart);
         }
 
-        var itemsDict = cart.Items.ToDictionary(x => x.ArticleId);
+        var itemsDict = cart.Items.ToDictionary(x => x.Name);
 
         foreach (var article in articles)
         {
-            if (article.Id < 1 || article.Quantity < 1 || article.Price < 0)
+            if (article.Quantity < 1 || article.Price < 0)
                 throw new ValidationException("Invalid article data.");
 
-            if (itemsDict.TryGetValue(article.Id, out var existingItem))
+            if (itemsDict.TryGetValue(article.Name, out var existingItem))
                 existingItem.Quantity += article.Quantity;
             else
                 cart.Items.Add(new CartItem
                 {
-                    ArticleId = article.Id,
                     Name = article.Name,
                     Price = article.Price,
                     Quantity = article.Quantity
@@ -78,7 +74,7 @@ public class CartRepository : ICartRepository
 
         await _databaseContext.SaveChangesAsync();
 
-        return await GetCartForUserAsync(userId) ?? new CartResponse();
+        return await GetCartForUserAsync(userId) ?? new CartDto();
     }
 
     public async Task<bool> RemoveArticleAsync(int userId, int articleId)

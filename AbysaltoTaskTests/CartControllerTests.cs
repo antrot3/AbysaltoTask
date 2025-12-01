@@ -25,8 +25,7 @@ namespace AbysaltoTaskTests
         public async Task GetMyCart_ReturnsOk_WhenCartExists()
         {
             // Arrange
-            _cartRepo.Setup(r => r.GetCartForUserAsync(It.IsAny<int>()))
-                .ReturnsAsync(new CartResponse { Id = 1, Articles = new List<ArticleDto>() });
+            _cartRepo.Setup(r => r.GetCartForUserAsync(It.IsAny<int>())).ReturnsAsync(new CartDto { Articles = new List<ArticleDto>() });
 
             var claims = new List<Claim>
             {

@@ -24,12 +24,42 @@ namespace InfrastructureLayer.Repositories
             _encryptionService = encryptionService;
         }
 
-        public async Task<List<Order>> GetAllOrdersForUser(int userId)
+        public async Task<List<OrderDto>> GetAllOrdersForUser(int userId)
         {
-            return await _db.Orders.Include(o => o.DeliveryCart)
-                                   .ThenInclude(c => c.Items)
-                                   .Where(o => o.UserId == userId)
-                                   .ToListAsync();
+            var response = await _db.Orders
+                .Include(o => o.DeliveryCart)
+                    .ThenInclude(c => c.Items)
+                .Where(o => o.UserId == userId)
+                .ToListAsync();
+
+            var result = new List<OrderDto>();
+
+            foreach (var item in response)
+            {
+                var order = new OrderDto
+                {
+                    CreatedAt = item.CreatedAt,
+                    DeliveryAddress = item.DeliveryAddress,
+                    DeliveryCountry = item.DeliveryCountry,
+                    DeliveryName = item.DeliveryName,
+                    DeliveryCardNumberEncrypted = item.DeliveryCardNumberEncrypted,
+                    IsDelivered = item.IsDelivered,
+                    CartResponse = new CartDto
+                    {
+                        Articles = item.DeliveryCart.Items.Select(i => new ArticleDto
+                        {
+                            Quantity= i.Quantity,
+                            Name = i.Name,
+                            Price = i.Price,
+
+                        }).ToList()
+                    }
+                };
+
+                result.Add(order);
+            }
+
+            return result;
         }
 
         public async Task<OrderDetailsDTO> CreateOrderFromCart(int userId, OrderDetailsDTO details)
@@ -55,17 +85,6 @@ namespace InfrastructureLayer.Repositories
             await _db.SaveChangesAsync();
 
             return details;
-        }
-
-        public async Task<bool> ExecuteOrderByIdAsync(int orderId)
-        {
-            var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
-            if (order == null || order.IsDelivered) 
-                return false;
-
-            order.IsDelivered = true;
-            await _db.SaveChangesAsync();
-            return true;
         }
     }
 }
