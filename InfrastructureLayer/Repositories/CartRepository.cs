@@ -77,9 +77,9 @@ public class CartRepository : ICartRepository
         return await GetCartForUserAsync(userId) ?? new CartDto();
     }
 
-    public async Task<bool> RemoveArticleAsync(int userId, int articleId)
+    public async Task<bool> RemoveArticleAsync(int userId, string name)
     {
-        var cartItem = await _databaseContext.CartItems.Include(i => i.Cart).FirstOrDefaultAsync(i => i.Cart.UserId == userId && i.ArticleId == articleId);
+        var cartItem = await _databaseContext.CartItems.Include(i => i.Cart).FirstOrDefaultAsync(i => i.Cart.UserId == userId && i.Name == name);
 
         if (cartItem == null) 
             return false;

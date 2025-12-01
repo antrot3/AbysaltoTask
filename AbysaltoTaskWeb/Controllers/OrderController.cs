@@ -34,4 +34,11 @@ public class OrderController : ControllerBase
         return Ok(created);
     }
 
+    [HttpDelete("delete")]
+    public async Task<IActionResult> DeleteOrder()
+    {
+        var success = await _orderRepository.DeleteOrder(GetUserId());
+        return success ? NoContent() : NotFound();
+    }
+
 }

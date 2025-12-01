@@ -13,5 +13,6 @@ namespace AplicationLayer.Interfaces
     {
         Task<List<OrderDto>> GetAllOrdersForUser(int userId);
         Task<OrderDetailsDTO> CreateOrderFromCart(int userId, OrderDetailsDTO orderDetails);
+        Task<bool> DeleteOrder(int userId);
     }
 }

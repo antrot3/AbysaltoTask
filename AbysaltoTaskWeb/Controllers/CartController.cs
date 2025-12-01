@@ -33,9 +33,9 @@ public class CartController : ControllerBase
     }
 
     [HttpPost("remove")]
-    public async Task<ActionResult<CartDto>> RemoveArticle([FromBody] int articleId)
+    public async Task<ActionResult<CartDto>> RemoveArticle([FromBody] string name)
     {
-        var success = await _cartRepository.RemoveArticleAsync(GetUserId(), articleId);
+        var success = await _cartRepository.RemoveArticleAsync(GetUserId(), name);
         return success ? Ok(await _cartRepository.GetCartForUserAsync(GetUserId())) : NotFound();
     }
 
