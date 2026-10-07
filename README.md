@@ -1,4 +1,14 @@
 # AbysaltoTask
-Ova aplikacija je cart servis za webshop s djelovima order servisa služi isključivo za prikaz znanja i kao takva nije spremna za nikakve produkcije.
-Kako bi se pokrenila sve što je potrebno je skinuti aplikaciju, pokrenuti je u visual studiu, izmjeniti prije prvog pokretanja connection string na bazu u filu appsettings.json, zatim pokrenuti aplikaciju pri prvom pokretanju kreira se sql baza podataka.
-Korisnik se treba registriati nakon čega token koji dobije kao response treba staviti u polje za authentifikaciju unutar swaggera.
+This app is a cart service for a webshop featuring partial order service capabilities. It is intended solely as a demonstration of technical skills and is not production-ready.
+
+To run the application:
+
+Download the app and open it in Visual Studio.
+
+Before running it for the first time, update the database connection string in the appsettings.json file.
+
+Launch the application (the SQL database will be automatically created on the initial run).
+
+Register a new user account.
+
+Copy the response token received upon registration and paste it into the authentication field in Swagger.
